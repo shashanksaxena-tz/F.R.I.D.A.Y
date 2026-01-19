@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>F.R.I.D.A.Y. | STARK INDUSTRIES</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
@@ -143,6 +144,9 @@
 
     <!-- VIDEO FEED -->
     <img id="video-layer" src="{{ url_for('video_feed') }}" onerror="this.src='https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2ZqZ2ZqZ2Zq/3o7qE1YN7aQSOeHcyY/giphy.gif'">
+
+    <!-- THREE.JS LAYER -->
+    <div id="three-container" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5; display: none;"></div>
 
     <!-- HUD OVERLAY -->
     <div class="hud-overlay">
@@ -315,6 +319,13 @@
                 if(data.speech) speak(data.speech);
                 if (data.action === "open_window") window.open(data.url, "_blank", "width=1200,height=800");
                 if (data.action === "scan") triggerScan();
+                if (data.action === "mode_switch" && data.speech.includes("Creative")) {
+                    initThreeJS();
+                    document.getElementById('three-container').style.display = 'block';
+                }
+                if (data.action === "mode_switch" && data.speech.includes("Disengaging")) {
+                    document.getElementById('three-container').style.display = 'none';
+                }
             })
             .catch(err => {
                 console.error(err);
@@ -346,6 +357,33 @@
                 speak(speech);
                 setTimeout(() => win.classList.remove('active'), 5000);
             }
+        }
+
+        // --- THREE.JS SUPPORT ---
+        let scene, camera, renderer, cube;
+        function initThreeJS() {
+            if(scene) return;
+            const container = document.getElementById('three-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            container.appendChild( renderer.domElement );
+
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshBasicMaterial( { color: 0x00f0ff, wireframe: true } );
+            cube = new THREE.Mesh( geometry, material );
+            scene.add( cube );
+
+            camera.position.z = 5;
+
+            function animate() {
+                requestAnimationFrame( animate );
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+                renderer.render( scene, camera );
+            }
+            animate();
         }
     </script>
 </body>
